@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Proyecto Multitarea Interactivo Mejorado</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-morado: #d300ff;
+            --neon-azul: #22d7ff;
+            --neon-verde: #00ffb0;
+            --neon-amarillo: #fffb00;
+            --neon-rosa: #ff2fa0;
+            --neon-naranja: #ff8800;
+            --bg-overlay: rgba(0,0,0,0.97);
+            --menu-radius: 28px;
+        }
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            background: var(--bg-overlay);
+            color: #fff;
+        }
+        .main-window, .app-window { display: none; }
+        .main-window { display: flex; flex-direction: column; align-items: center; min-height: 100vh; justify-content: center; }
+        .neon-title {
+            font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
+            font-size: 2.3em;
+            margin-bottom: 32px;
+            color: var(--neon-morado);
+            text-shadow: 0 0 12px #fff, 0 0 40px var(--neon-morado), 0 0 60px var(--neon-morado), 0 0 90px #fff;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #fff, #d300ff 40%, #a100ff 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: brightness(1.15);
+        }
+        .neon-menu { display: flex; flex-wrap: wrap; gap: 34px; margin: 30px 0 0 0; }
+        .neon-btn {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1.18em;
+            padding: 19px 36px;
+            border-radius: var(--menu-radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            background: #111;
+            margin: 0 10px;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+            box-shadow: 0 0 22px 2px #000;
+        }
+        .neon-btn.ia {
+            color: var(--neon-morado);
+            border: 3px solid var(--neon-morado);
+            background: linear-gradient(90deg, #2a0050, #d300ff 70%, #a100ff 100%);
+            font-size: 2.2em;
+            text-shadow: 0 0 30px #fff, 0 0 18px var(--neon-morado), 0 0 40px var(--neon-morado);
+            box-shadow: 0 0 60px 5px var(--neon-morado), 0 0 0 #fff;
+            animation: neon-ia-pulse 2.2s infinite alternate;
+            letter-spacing: 2px;
+        }
+        @keyframes neon-ia-pulse {
+            from { box-shadow: 0 0 36px 4px var(--neon-morado), 0 0 0 #fff;}
+            to { box-shadow: 0 0 90px 12px var(--neon-morado), 0 0 10px #fff;}
+        }
+        .neon-btn.frutas { color: var(--neon-rosa); text-shadow: 0 0 12px var(--neon-rosa); border: 2px solid var(--neon-rosa);}
+        .neon-btn.agenda { color: var(--neon-verde); text-shadow: 0 0 12px var(--neon-verde); border: 2px solid var(--neon-verde);}
+        .neon-btn.calc { color: var(--neon-amarillo); text-shadow: 0 0 12px var(--neon-amarillo); border: 2px solid var(--neon-amarillo);}
+        .neon-btn.ciclos { color: var(--neon-azul); text-shadow: 0 0 12px var(--neon-azul); border: 2px solid var(--neon-azul);}
+        .neon-btn.combos { color: var(--neon-naranja); text-shadow: 0 0 12px var(--neon-naranja); border: 2px solid var(--neon-naranja);}
+        .neon-btn.comparacion { color: #00ffd0; text-shadow: 0 0 12px #00ffd0; border: 2px solid #00ffd0;}
+        .neon-btn:hover { transform: scale(1.07); box-shadow: 0 0 60px 10px #fff8; background: #222; }
+        .app-window { display: none; min-height: 92vh; align-items: center; justify-content: center;}
+        .app-window.active, .main-window.active { display: flex; }
+        .app-card {
+            background: rgba(10,10,10,0.97);
+            padding: 36px 32px 32px 32px;
+            border-radius: 24px;
+            box-shadow: 0 10px 38px #d300ff55, 0 0 0 8px #111;
+            color: #fff;
+            max-width: 540px;
+            width: 94vw;
+            margin: 20px auto;
+            position: relative;
+        }
+        .back-btn {
+            position: absolute; top: 24px; left: 24px; background: #222; color: #fff; border: 2px solid #fff5; border-radius: 12px; padding: 6px 20px; font-weight: bold; font-size: 1em; cursor: pointer; box-shadow: 0 0 10px #fff5; transition: background 0.2s, color 0.2s; z-index: 110;
+        }
+        .back-btn:hover { background: var(--neon-morado); color: #fff; }
+        .app-card input, .app-card select, .app-card textarea, .app-card button {
+            font-size: 1em;
+            border-radius: 8px;
+            border: none;
+            margin: 4px 0 7px 0;
+            padding: 7px;
+        }
+        .app-card label { font-weight: bold; }
+        .result, .combo-result, .compRes, .ciclosRes {
+            font-size: 1.1em;
+            color: #fffb00;
+            text-shadow: 0 0 8px #fffb00;
+            margin: 17px 0;
+        }
+        /* Frutas lista especial */
+        .frutas-lista-btns button {
+            background: none;
+            border: 2px solid var(--neon-rosa);
+            color: var(--neon-rosa);
+            border-radius: 12px;
+            font-weight: bold;
+            margin: 2px 6px 2px 0;
+            transition: background 0.2s, color 0.2s;
+            cursor: pointer;
+        }
+        .frutas-lista-btns button:hover {
+            background: var(--neon-rosa);
+            color: #fff;
+        }
+        .frutas-lista-ul li.selected { background: #ff2fa033; }
+        /* IA de voces vistosa */
+        .ia-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .ia-icon {
+            font-size: 3.4em;
+            color: var(--neon-morado);
+            text-shadow: 0 0 25px var(--neon-morado);
+        }
+        .ia-title {
+            font-size: 2.5em;
+            font-family: 'Orbitron', Arial, sans-serif;
+            color: var(--neon-morado);
+            text-shadow: 0 0 24px var(--neon-morado), 0 0 8px #fff;
+            margin-bottom: 0;
+        }
+        .ia-desc {
+            color: #ff9a8b;
+            margin-bottom: 18px;
+            font-size: 1.22em;
+        }
+        /* Menu combos checkboxes y resumen */
+        .combos-list {
+            margin-bottom: 14px;
+        }
+        .combo-checkbox {
+            accent-color: var(--neon-naranja);
+            width: 1.3em;
+            height: 1.3em;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+        .combo-label {
+            font-size: 1.07em;
+            color: var(--neon-naranja);
+            padding: 10px 0 10px 0;
+            margin: 0 0 6px 0;
+            border-radius: 14px;
+            display: block;
+            background: #1a1000;
+            border: 1.7px solid var(--neon-naranja);
+            box-shadow: 0 0 12px #ff880044;
+            transition: background 0.15s;
+        }
+        .combo-label.selected {
+            background: var(--neon-naranja);
+            color: #111;
+        }
+        .combos-summary {
+            margin: 14px 0 0 0;
+            font-size: 1.11em;
+            color: #fffb00;
+            text-shadow: 0 0 8px #fffb00;
+        }
+        /* Ciclo de números gráfico */
+        .ciclos-barras {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            margin-top: 12px;
+            height: 60px;
+            min-width: 80px;
+        }
+        .ciclos-barra {
+            background: linear-gradient(180deg, var(--neon-azul), #222 60%);
+            width: 16px;
+            border-radius: 6px 6px 0 0;
+            transition: height 0.5s;
+            box-shadow: 0 0 7px #22d7ff88;
+        }
+    </style>
+</head>
+<body>
+    <!-- Ventana Principal -->
+    <div class="main-window active" id="mainWindow">
+        <div>
+            <div class="neon-title">Hola a todos, este es nuestro proyecto</div>
+            <div class="neon-menu">
+                <button class="neon-btn ia" id="btnIa">🌟 IA de Voces</button>
+                <button class="neon-btn frutas" id="btnFrutas">🍉 Lista de Frutas</button>
+                <button class="neon-btn agenda" id="btnAgenda">📋 Agenda</button>
+                <button class="neon-btn calc" id="btnCalc">🧮 Calculadora</button>
+                <button class="neon-btn ciclos" id="btnCiclos">🔄 Ciclo de Números</button>
+                <button class="neon-btn combos" id="btnCombos">🍔 Menú de Combos</button>
+                <button class="neon-btn comparacion" id="btnComparacion">🔢 Comparación de Números</button>
+            </div>
+        </div>
+    </div>
+    <!-- IA de Voces Mejorada -->
+    <div class="app-window" id="iaWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <div class="ia-hero">
+                <span class="ia-icon">🔊</span>
+                <div class="ia-title">IA de Voces</div>
+            </div>
+            <div class="ia-desc">Convierte y traduce texto en voz con muchos idiomas y estilos.<br>¡Elige idioma, escribe tu frase y escucha!</div>
+            <label for="lang-ia-select">Idioma destino:</label>
+            <select id="lang-ia-select">
+                <option value="es">Español</option>
+                <option value="en">Inglés</option>
+                <option value="fr">Francés</option>
+                <option value="de">Alemán</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Portugués</option>
+                <option value="ru">Ruso</option>
+                <option value="zh-CN">Chino</option>
+                <option value="ja">Japonés</option>
+                <option value="ar">Árabe</option>
+                <option value="hi">Hindi</option>
+                <option value="ko">Coreano</option>
+                <option value="tr">Turco</option>
+                <option value="pl">Polaco</option>
+            </select>
+            <label for="style-select">Estilo de voz:</label>
+            <select id="style-select">
+                <option value="robotic">Robótico</option>
+                <option value="deep">Grave</option>
+                <option value="high">Agudo</option>
+                <option value="neutral">Neutral</option>
+                <option value="fast">Rápido</option>
+                <option value="slow">Lento</option>
+            </select>
+            <label for="ia-text">Texto:</label>
+            <textarea id="ia-text" rows="2" placeholder="Escribe tu frase aquí"></textarea>
+            <button style="background:var(--neon-morado);color:#fff;" id="iaSpeakBtn">Traducir y Hablar</button>
+        </div>
+    </div>
+    <!-- Frutas unificada -->
+    <div class="app-window" id="frutasWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <h2 style="color:var(--neon-rosa);text-shadow:0 0 10px var(--neon-rosa);">Lista de Frutas</h2>
+            <ul class="frutas-lista-ul" id="frutasListEspecial"></ul>
+            <div class="frutas-lista-btns" style="margin-bottom: 6px;">
+                <button data-fruta="Manzana">Manzana</button>
+                <button data-fruta="Plátano">Plátano</button>
+                <button data-fruta="Naranja">Naranja</button>
+                <button data-fruta="Uva">Uva</button>
+                <button data-fruta="Piña">Piña</button>
+                <button data-fruta="Fresa">Fresa</button>
+                <button data-fruta="Melón">Melón</button>
+                <button data-fruta="Cereza">Cereza</button>
+            </div>
+            <input type="text" id="frutaInputEspecial" placeholder="Agregar fruta...">
+            <button style="background:var(--neon-rosa);color:#fff;" id="addFrutaEspecialBtn">Agregar</button>
+            <button style="background:#222;color:var(--neon-rosa);border:1px solid var(--neon-rosa);" id="delFrutaEspecialBtn">Eliminar seleccionada</button>
+        </div>
+    </div>
+    <!-- Agenda -->
+    <div class="app-window" id="agendaWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <h2 style="color:var(--neon-verde);text-shadow:0 0 10px var(--neon-verde);">Agenda</h2>
+            <input type="text" class="agenda-input" id="inputTarea" placeholder="Escribe una tarea...">
+            <input type="date" class="agenda-date" id="inputFecha">
+            <button style="background:var(--neon-verde);color:#111;" id="addTareaBtn">Agregar</button>
+            <div class="agenda-lists" style="display:flex;gap:15px;">
+                <div style="flex:1;">
+                    <label>Pendientes</label>
+                    <ul id="list1"></ul>
+                </div>
+                <div style="flex:1;">
+                    <label>Seleccionados</label>
+                    <ul id="list2"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Calculadora -->
+    <div class="app-window" id="calcWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <h2 style="color:var(--neon-amarillo);text-shadow:0 0 8px var(--neon-amarillo);">Calculadora Interactiva</h2>
+            <select id="operation">
+                <option value="" disabled selected>Elige una operación</option>
+                <option value="add">Sumar (+)</option>
+                <option value="subtract">Restar (−)</option>
+                <option value="multiply">Multiplicar (×)</option>
+                <option value="divide">Dividir (÷)</option>
+                <option value="power">Potencia (^)</option>
+                <option value="sqrt">Raíz cuadrada (√)</option>
+                <option value="mod">Módulo (%)</option>
+                <option value="max">Máximo</option>
+                <option value="min">Mínimo</option>
+            </select>
+            <div id="input1Container">
+                <input type="number" id="num1" class="input" placeholder="Primer número">
+            </div>
+            <div id="input2Container">
+                <input type="number" id="num2" class="input" placeholder="Segundo número">
+            </div>
+            <button style="background:var(--neon-amarillo);color:#111;" id="calcBtn">Calcular</button>
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+    <!-- Ciclo de números dinámico -->
+    <div class="app-window" id="ciclosWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <h2 style="color:var(--neon-azul);text-shadow:0 0 10px var(--neon-azul);">Ciclo de Números</h2>
+            <label>¿Hasta qué número deseas sumar?</label>
+            <input type="number" min="1" id="hastaNum" placeholder="Ejemplo: 10">
+            <button style="background:var(--neon-azul);color:#111;" id="sumarCiclosBtn">Calcular suma</button>
+            <div class="result" id="ciclosRes"></div>
+            <div class="ciclos-barras" id="ciclosBarras"></div>
+        </div>
+    </div>
+    <!-- Menú de Combos con selección múltiple -->
+    <div class="app-window" id="combosWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <h2 style="color:var(--neon-naranja);text-shadow:0 0 8px var(--neon-naranja);">Menú de Combos</h2>
+            <form id="combosForm">
+                <div class="combos-list" id="combosList"></div>
+                <button type="button" style="background:var(--neon-naranja);color:#111;width:100%;margin-top:10px;" id="combosResumenBtn">Ver resumen y total</button>
+            </form>
+            <div class="combos-summary" id="combosSummary"></div>
+        </div>
+    </div>
+    <!-- Comparación de Números -->
+    <div class="app-window" id="comparacionWindow">
+        <button class="back-btn" onclick="showWindow('mainWindow')">← Regresar</button>
+        <div class="app-card">
+            <h2 style="color:#00ffd0;text-shadow:0 0 8px #00ffd0;">Comparar Tres Números</h2>
+            <input type="number" id="numA" placeholder="Número a">
+            <input type="number" id="numB" placeholder="Número b">
+            <input type="number" id="numC" placeholder="Número c"><br>
+            <button style="background:#00ffd0;color:#111;" id="compBtn">Comparar</button>
+            <div class="compRes" id="compRes"></div>
+        </div>
+    </div>
+    <script>
+        // Navegación
+        function showWindow(id) {
+            document.querySelectorAll('.main-window, .app-window').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        document.getElementById('btnIa').onclick = () => showWindow('iaWindow');
+        document.getElementById('btnFrutas').onclick = () => showWindow('frutasWindow');
+        document.getElementById('btnAgenda').onclick = () => showWindow('agendaWindow');
+        document.getElementById('btnCalc').onclick = () => showWindow('calcWindow');
+        document.getElementById('btnCiclos').onclick = () => showWindow('ciclosWindow');
+        document.getElementById('btnCombos').onclick = () => showWindow('combosWindow');
+        document.getElementById('btnComparacion').onclick = () => showWindow('comparacionWindow');
+
+        // ---- IA de Voces Mejorada ----
+        async function translateText(text, targetLang) {
+            try {
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`);
+                const data = await res.json();
+                return data[0][0][0];
+            } catch {
+                return text;
+            }
+        }
+        document.getElementById('iaSpeakBtn').onclick = async function() {
+            const text = document.getElementById('ia-text').value.trim();
+            const lang = document.getElementById('lang-ia-select').value;
+            const style = document.getElementById('style-select').value;
+            if (!text) return alert('Escribe un texto.');
+            const styleConfig = {
+                robotic: { pitch: 1, rate: 1 },
+                deep: { pitch: 0.7, rate: 1 },
+                high: { pitch: 1.7, rate: 1 },
+                neutral: { pitch: 1, rate: 1 },
+                fast: { pitch: 1, rate: 1.5 },
+                slow: { pitch: 1, rate: 0.7 }
+            };
+            const utter1 = new SpeechSynthesisUtterance(text);
+            utter1.lang = "es";
+            utter1.pitch = styleConfig[style].pitch;
+            utter1.rate = styleConfig[style].rate;
+            window.speechSynthesis.speak(utter1);
+            utter1.onend = async () => {
+                const translated = await translateText(text, lang);
+                const aviso = "Su traducción es: ";
+                const utter2 = new SpeechSynthesisUtterance(aviso);
+                utter2.lang = "es";
+                window.speechSynthesis.speak(utter2);
+                utter2.onend = () => {
+                    const utter3 = new SpeechSynthesisUtterance(translated);
+                    utter3.lang = lang;
+                    utter3.pitch = styleConfig[style].pitch;
+                    utter3.rate = styleConfig[style].rate;
+                    window.speechSynthesis.speak(utter3);
+                };
+            };
+        };
+
+        // ---- Frutas especial ----
+        const frutasPredeterminadas = ["Mango","Kiwi","Papaya","Sandía","Lima","Granada","Durazno","Mandarina"];
+        const frutasListEspecial = document.getElementById('frutasListEspecial');
+        let frutasEspecial = frutasPredeterminadas.slice();
+        let idxEspecial = -1;
+        function renderFrutasEspecial() {
+            frutasListEspecial.innerHTML = "";
+            frutasEspecial.forEach((f, idx) => {
+                const li = document.createElement('li');
+                li.textContent = f;
+                if(idxEspecial === idx) li.classList.add('selected');
+                li.onclick = () => { idxEspecial = idx; renderFrutasEspecial(); }
+                frutasListEspecial.appendChild(li);
+            });
+        }
+        renderFrutasEspecial();
+        document.querySelectorAll('.frutas-lista-btns button').forEach(btn => {
+            btn.onclick = () => {
+                frutasEspecial.push(btn.dataset.fruta);
+                renderFrutasEspecial();
+            }
+        });
+        document.getElementById('addFrutaEspecialBtn').onclick = () => {
+            const val = document.getElementById('frutaInputEspecial').value.trim();
+            if(val) frutasEspecial.push(val);
+            document.getElementById('frutaInputEspecial').value = '';
+            renderFrutasEspecial();
+        }
+        document.getElementById('delFrutaEspecialBtn').onclick = () => {
+            if(idxEspecial !== -1) frutasEspecial.splice(idxEspecial, 1);
+            idxEspecial = -1;
+            renderFrutasEspecial();
+        }
+
+        // ---- Agenda ----
+        const inputTarea = document.getElementById('inputTarea');
+        const inputFecha = document.getElementById('inputFecha');
+        const addTareaBtn = document.getElementById('addTareaBtn');
+        const list1 = document.getElementById('list1');
+        const list2 = document.getElementById('list2');
+        function speakEs(text) {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = "es";
+            window.speechSynthesis.speak(u);
+        }
+        function addTarea(texto, fecha) {
+            const li = document.createElement('li');
+            const spanText = document.createElement('span');
+            spanText.textContent = texto;
+            li.appendChild(spanText);
+            if (fecha) {
+                const spanFecha = document.createElement('span');
+                spanFecha.className = "agenda-date-list";
+                spanFecha.textContent = " - " + fecha;
+                li.appendChild(spanFecha);
+            }
+            const delBtn = document.createElement('button');
+            delBtn.textContent = "Eliminar";
+            delBtn.className = "agenda-delete-btn";
+            delBtn.onclick = function(e) {
+                li.parentNode.removeChild(li);
+                e.stopPropagation();
+            };
+            li.appendChild(delBtn);
+            li.addEventListener('click', function(e) {
+                if (li.parentNode === list1) {
+                    list2.appendChild(li);
+                }
+                let txt = texto;
+                if (fecha) txt += " para el " + fecha;
+                speakEs("Tarea seleccionada: " + txt);
+            });
+            li.addEventListener('dblclick', function(e) {
+                if (li.parentNode === list2) {
+                    list1.appendChild(li);
+                }
+            });
+            list1.appendChild(li);
+            let txt = texto;
+            if (fecha) txt += " para el " + fecha;
+            speakEs("Tarea agregada: " + txt);
+        }
+        addTareaBtn.onclick = () => {
+            if (inputTarea.value.trim()) {
+                addTarea(inputTarea.value.trim(), inputFecha.value);
+                inputTarea.value = '';
+                inputFecha.value = '';
+            }
+        };
+        inputTarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.trim() !== "") {
+                addTarea(this.value.trim(), inputFecha.value);
+                this.value = '';
+                inputFecha.value = '';
+                e.preventDefault();
+            }
+        });
+
+        // ---- Calculadora ----
+        const operation = document.getElementById('operation');
+        const num1 = document.getElementById('num1');
+        const num2 = document.getElementById('num2');
+        const result = document.getElementById('result');
+        const calcBtn = document.getElementById('calcBtn');
+        function setCalcVisibility() {
+            const op = operation.value;
+            document.getElementById('input1Container').style.display = 'none';
+            document.getElementById('input2Container').style.display = 'none';
+            if(op === "sqrt") {
+                document.getElementById('input1Container').style.display = '';
+                num1.placeholder = "Número";
+            } else if(op) {
+                document.getElementById('input1Container').style.display = '';
+                document.getElementById('input2Container').style.display = '';
+            }
+        }
+        operation.onchange = setCalcVisibility;
+        setCalcVisibility();
+        calcBtn.onclick = () => {
+            const op = operation.value;
+            let n1 = parseFloat(num1.value);
+            let n2 = parseFloat(num2.value);
+            let res = "";
+            if (!op) { result.textContent = ""; return; }
+            if (["add","subtract","multiply","divide","power","mod","max","min"].includes(op) && (isNaN(n1) || isNaN(n2))) {
+                result.textContent = "Por favor ingresa ambos números."; return;
+            }
+            if (op === "sqrt") {
+                if(isNaN(n1)) { result.textContent = "Por favor ingresa un número."; return; }
+                res = Math.sqrt(n1);
+            } else if (op === "add") res = n1 + n2;
+            else if (op === "subtract") res = n1 - n2;
+            else if (op === "multiply") res = n1 * n2;
+            else if (op === "divide") {
+                if (n2 === 0) { result.textContent = "No se puede dividir por cero."; return; }
+                res = n1 / n2;
+            } else if (op === "power") res = Math.pow(n1, n2);
+            else if (op === "mod") res = n1 % n2;
+            else if (op === "max") res = Math.max(n1, n2);
+            else if (op === "min") res = Math.min(n1, n2);
+            const resTxt = "Resultado: " + res;
+            result.textContent = resTxt;
+            speakEs(resTxt);
+        };
+
+        // ---- Ciclo de Números con barras ----
+        document.getElementById('sumarCiclosBtn').onclick = function() {
+            const hasta = parseInt(document.getElementById('hastaNum').value);
+            let res = 0;
+            const barrasDiv = document.getElementById('ciclosBarras');
+            barrasDiv.innerHTML = "";
+            if(isNaN(hasta) || hasta < 1) {
+                document.getElementById('ciclosRes').textContent = "Ingresa un número válido mayor que 0";
+                return;
+            }
+            // Barras animadas y suma progresiva
+            let suma = 0;
+            for(let i=1; i<=hasta; i++) {
+                suma += i;
+                const barra = document.createElement('div');
+                barra.className = "ciclos-barra";
+                barra.style.height = "10px";
+                barra.title = `Suma hasta ${i}: ${suma}`;
+                barrasDiv.appendChild(barra);
+                setTimeout(() => {
+                    barra.style.height = `${10 + 50 * (suma/(hasta*(hasta+1)/2))}px`;
+                }, 40*i);
+            }
+            const txt = `La suma de los números del 1 al ${hasta} es: ${suma}`;
+            document.getElementById('ciclosRes').textContent = txt;
+            speakEs(txt);
+        }
+
+        // ---- Menú de Combos múltiple y resumen ----
+        const combosData = [
+            {
+                comida: "Hamburguesa sencilla", postre: "3 rebanadas de manzana", bebida: "Coca-cola de 600 ml", precio: 88
+            },
+            {
+                comida: "Hamburguesa doble", postre: "Malteada de chocolate", bebida: "Papas de onda con 600 ml", precio: 98
+            },
+            {
+                comida: "Chilaquiles verdes", postre: "Pastel de 3 leches", bebida: "Agua de horchata, 1 litro", precio: 140
+            },
+            {
+                comida: "Tacos al pastor", postre: "Gelatina de mango", bebida: "Limonada", precio: 75
+            },
+            {
+                comida: "Hot dog especial", postre: "Brownie", bebida: "Refresco de naranja", precio: 82
+            },
+            {
+                comida: "Ensalada César", postre: "Yogur con frutos rojos", bebida: "Agua mineral", precio: 95
+            }
+        ];
+        const combosListDiv = document.getElementById('combosList');
+        combosListDiv.innerHTML = "";
+        combosData.forEach((combo, idx) => {
+            const label = document.createElement('label');
+            label.className = "combo-label";
+            label.innerHTML = `<input type="checkbox" class="combo-checkbox" value="${idx}"> <b>Combo ${idx+1}</b>: ${combo.comida} + ${combo.postre} + ${combo.bebida} ($${combo.precio})`;
+            combosListDiv.appendChild(label);
+        });
+        document.getElementById('combosResumenBtn').onclick = () => {
+            const boxes = document.querySelectorAll('.combo-checkbox');
+            let sel = [];
+            boxes.forEach((box, idx) => {
+                if(box.checked) { sel.push(idx); boxes[idx].parentNode.classList.add('selected'); } else { boxes[idx].parentNode.classList.remove('selected'); }
+            });
+            if(sel.length===0) {
+                document.getElementById('combosSummary').textContent = "Selecciona al menos un combo.";
+                return;
+            }
+            let resumen = "", total = 0;
+            let comidas=[], postres=[], bebidas=[];
+            sel.forEach(idx=>{
+                const c=combosData[idx];
+                comidas.push(c.comida);
+                postres.push(c.postre);
+                bebidas.push(c.bebida);
+                total += c.precio;
+            });
+            // Descuentos especiales
+            let descuento = 0;
+            if(sel.includes(0)&&sel.includes(2)&&sel.includes(3)) descuento = 0.15;
+            if(sel.includes(1)&&sel.includes(3)&&sel.includes(5)) descuento = 0.12;
+            let txt = `Tu selección:\nComidas: ${comidas.join(", ")}\nPostres: ${postres.join(", ")}\nBebidas: ${bebidas.join(", ")}\nTotal: $${total}`;
+            if(descuento>0){
+                let rebaja = Math.round(total*descuento);
+                txt += `\nDescuento aplicado: ${descuento*100}% ($${rebaja} menos)\nTotal con descuento: $${total-rebaja}`;
+            }
+            document.getElementById('combosSummary').textContent = txt.replace(/\n/g, "\n");
+            speakEs(txt.replace(/\n/g, ". "));
+        };
+
+        // ---- Comparación de números ----
+        document.getElementById('compBtn').onclick = function() {
+            let a = Number(document.getElementById('numA').value);
+            let b = Number(document.getElementById('numB').value);
+            let c = Number(document.getElementById('numC').value);
+            let mayor = Math.max(a, b, c);
+            let menor = Math.min(a, b, c);
+            let r = '';
+            if (a === b && b === c) r = `Todos son iguales: ${a}`;
+            else r = `El mayor es: ${mayor}, el menor es: ${menor}`;
+            document.getElementById('compRes').textContent = r;
+            speakEs(r);
+        }
+    </script>
+</body>
+</html>
